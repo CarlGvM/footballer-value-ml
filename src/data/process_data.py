@@ -1,34 +1,67 @@
 import pandas as pd
+import numpy as np
 from pathlib import Path
 
-RAW_DATA_PATH = Path("data/raw/fifa_player_performance_market_value.csv")
+RAW_DATA_PATH = Path("data/raw/players_22.csv")
 PROCESSED_DATA_PATH = Path("data/processed")
 PROCESSED_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 def process_data() -> pd.DataFrame:
     """
-    Clean and prepare raw FIFA player data for model training.
+    Clean and prepare FIFA 22 player data for model training.
     Returns processed DataFrame.
     """
     print("Loading raw data...")
-    df = pd.read_csv(RAW_DATA_PATH)
+    df = pd.read_csv(RAW_DATA_PATH, low_memory=False)
     print(f"Raw data shape: {df.shape}")
 
-    # Drop columns not useful for prediction
-    df = df.drop(columns=["player_id", "player_name", "nationality", "club"])
+    # Drop rows where target variable is missing
+    df = df.dropna(subset=["value_eur"])
 
-    # Encode binary categorical column
-    df["injury_prone"] = df["injury_prone"].map({"Yes": 1, "No": 0})
+    # Select relevant features + target
+    features = [
+        "age", "overall", "potential", "wage_eur",
+        "international_reputation", "weak_foot", "skill_moves",
+        "pace", "shooting", "passing", "dribbling", "defending", "physic",
+        "preferred_foot", "work_rate", "player_positions",
+        "club_contract_valid_until", "value_eur"
+    ]
+    df = df[features]
 
-    # Encode ordinal categorical column
-    risk_map = {"Low": 0, "Medium": 1, "High": 2}
-    df["transfer_risk_level"] = df["transfer_risk_level"].map(risk_map)
+    # Engineer contract years remaining
+    FIFA_22_YEAR = 2022
+    df["years_on_contract"] = df["club_contract_valid_until"] - FIFA_22_YEAR
+    df = df.drop(columns=["club_contract_valid_until"])
 
-    # One-hot encode position
-    df = pd.get_dummies(df, columns=["position"])
+    # Simplify positions to primary position only (e.g. "ST, CF" -> "ST")
+    df["position"] = df["player_positions"].str.split(",").str[0].str.strip()
+    df = df.drop(columns=["player_positions"])
 
-    # Drop any rows with missing values
+    # Group positions into broader categories
+    position_map = {
+        "GK": "GK",
+        "CB": "DEF", "LB": "DEF", "RB": "DEF", "LWB": "DEF", "RWB": "DEF",
+        "CDM": "MID", "CM": "MID", "CAM": "MID", "LM": "MID", "RM": "MID",
+        "LW": "ATT", "RW": "ATT", "ST": "ATT", "CF": "ATT", "RF": "ATT", "LF": "ATT"
+    }
+    df["position"] = df["position"].map(position_map)
+
+    # Encode preferred foot
+    df["preferred_foot"] = df["preferred_foot"].map({"Right": 1, "Left": 0})
+
+    # Simplify work rate (e.g. "High/Medium" -> two separate columns)
+    df["attack_work_rate"] = df["work_rate"].str.split("/").str[0].str.strip()
+    df["defense_work_rate"] = df["work_rate"].str.split("/").str[1].str.strip()
+    df = df.drop(columns=["work_rate"])
+
+    # One-hot encode categorical columns
+    df = pd.get_dummies(df, columns=["position", "attack_work_rate", "defense_work_rate"])
+
+    # Drop remaining rows with missing values
     df = df.dropna()
+
+    # Log transform the target variable to handle skew
+    df["value_eur"] = np.log1p(df["value_eur"])
 
     print(f"Processed data shape: {df.shape}")
     print(f"Columns: {df.columns.tolist()}")

@@ -1,0 +1,22 @@
+artifact_path: /Users/carlmacair1/Documents/footballer-value-ml/mlruns/1/models/m-09df3675d999445f9e1583ca2118e931/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.13.5
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBRegressor
+    model_format: ubj
+    xgb_version: 3.2.0
+mlflow_version: 3.9.0
+model_id: m-09df3675d999445f9e1583ca2118e931
+model_size_bytes: 418872
+model_uuid: m-09df3675d999445f9e1583ca2118e931
+prompts: null
+run_id: 1a2ad51fedac4966a23512397892887a
+utc_time_created: '2026-02-24 15:04:41.710789'
