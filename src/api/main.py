@@ -60,7 +60,7 @@ def health():
 @app.post("/predict")
 def predict(player: PlayerInput):
     # Convert input to DataFrame
-    input_data = pd.DataFrame([player.dict()])
+    input_data = pd.DataFrame([player.model_dump()])
     
     # Ensure column order matches training data
     input_data = input_data[FEATURE_COLUMNS]
