@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footballer Value Predictor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #0a0e1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0d1b2a, #1a3a2a);
+            border-bottom: 2px solid #00ff87;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #00ff87;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            color: #8899aa;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .pitch-icon {
+            width: 50px;
+            height: 50px;
+            background: #00ff87;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: #0d1b2a;
+            border: 1px solid #1e3a4a;
+            border-radius: 12px;
+            padding: 28px;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #00ff87;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1e3a4a;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8899aa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            background: #0a0e1a;
+            border: 1px solid #1e3a4a;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00ff87;
+        }
+
+        .form-group select option {
+            background: #0d1b2a;
+        }
+
+        .slider-group {
+            margin-bottom: 16px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #8899aa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .slider-group label span {
+            color: #00ff87;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #00ff87;
+            cursor: pointer;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #00ff87, #00cc6a);
+            color: #0a0e1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .predict-btn:hover { opacity: 0.9; }
+        .predict-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .result-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #0d1b2a, #0d2a1b);
+            border: 1px solid #00ff87;
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-card.visible { display: block; }
+
+        .result-label {
+            font-size: 0.85rem;
+            color: #8899aa;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #00ff87;
+            margin-bottom: 6px;
+        }
+
+        .result-euros {
+            font-size: 1.1rem;
+            color: #aabbcc;
+        }
+
+        .loading {
+            display: none;
+            color: #8899aa;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .error {
+            display: none;
+            color: #ff4466;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="pitch-icon">⚽</div>
+    <div>
+        <h1>Footballer Value Predictor</h1>
+        <p>ML-powered market value estimation</p>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Left Card: Player Info -->
+    <div class="card">
+        <h2>Player Profile</h2>
+
+        <div class="two-col">
+            <div class="form-group">
+                <label>Age</label>
+                <input type="number" id="age" value="22" min="16" max="45">
+            </div>
+            <div class="form-group">
+                <label>Preferred Foot</label>
+                <select id="preferred_foot">
+                    <option value="1">Right</option>
+                    <option value="0">Left</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="form-group">
+                <label>Weak Foot ★</label>
+                <select id="weak_foot">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Skill Moves ★</label>
+                <select id="skill_moves">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="form-group">
+                <label>Position</label>
+                <select id="position">
+                    <option value="ATT">Attacker</option>
+                    <option value="MID">Midfielder</option>
+                    <option value="DEF">Defender</option>
+                    <option value="GK">Goalkeeper</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Int. Reputation ★</label>
+                <select id="international_reputation">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="form-group">
+                <label>Attack Work Rate</label>
+                <select id="attack_work_rate">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Defense Work Rate</label>
+                <select id="defense_work_rate">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="form-group">
+                <label>Wage (€/week)</label>
+                <input type="number" id="wage_eur" value="25000" min="500">
+            </div>
+            <div class="form-group">
+                <label>Years on Contract</label>
+                <input type="number" id="years_on_contract" value="3" min="0" max="10">
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Card: Attributes -->
+    <div class="card">
+        <h2>Player Attributes</h2>
+
+        <div class="slider-group">
+            <label>Overall Rating <span id="overall_val">82</span></label>
+            <input type="range" id="overall" min="40" max="99" value="82"
+                oninput="document.getElementById('overall_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Potential <span id="potential_val">91</span></label>
+            <input type="range" id="potential" min="40" max="99" value="91"
+                oninput="document.getElementById('potential_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Pace <span id="pace_val">85</span></label>
+            <input type="range" id="pace" min="1" max="99" value="85"
+                oninput="document.getElementById('pace_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Shooting <span id="shooting_val">78</span></label>
+            <input type="range" id="shooting" min="1" max="99" value="78"
+                oninput="document.getElementById('shooting_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Passing <span id="passing_val">80</span></label>
+            <input type="range" id="passing" min="1" max="99" value="80"
+                oninput="document.getElementById('passing_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Dribbling <span id="dribbling_val">86</span></label>
+            <input type="range" id="dribbling" min="1" max="99" value="86"
+                oninput="document.getElementById('dribbling_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Defending <span id="defending_val">32</span></label>
+            <input type="range" id="defending" min="1" max="99" value="32"
+                oninput="document.getElementById('defending_val').textContent=this.value">
+        </div>
+
+        <div class="slider-group">
+            <label>Physicality <span id="physic_val">68</span></label>
+            <input type="range" id="physic" min="1" max="99" value="68"
+                oninput="document.getElementById('physic_val').textContent=this.value">
+        </div>
+
+        <button class="predict-btn" onclick="predict()">⚡ Predict Market Value</button>
+        <div class="loading" id="loading">Analysing player...</div>
+        <div class="error" id="error"></div>
+    </div>
+
+    <!-- Result Card -->
+    <div class="result-card" id="result">
+        <div class="result-label">Estimated Market Value</div>
+        <div class="result-value" id="result-millions">—</div>
+        <div class="result-euros" id="result-euros">—</div>
+    </div>
+
+</div>
+
+<script>
+    async function predict() {
+        const btn = document.querySelector('.predict-btn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const result = document.getElementById('result');
+
+        btn.disabled = true;
+        loading.style.display = 'block';
+        error.style.display = 'none';
+        result.classList.remove('visible');
+
+        const position = document.getElementById('position').value;
+        const attackWR = document.getElementById('attack_work_rate').value;
+        const defenseWR = document.getElementById('defense_work_rate').value;
+
+        const payload = {
+            age: parseInt(document.getElementById('age').value),
+            overall: parseInt(document.getElementById('overall').value),
+            potential: parseInt(document.getElementById('potential').value),
+            wage_eur: parseFloat(document.getElementById('wage_eur').value),
+            international_reputation: parseInt(document.getElementById('international_reputation').value),
+            weak_foot: parseInt(document.getElementById('weak_foot').value),
+            skill_moves: parseInt(document.getElementById('skill_moves').value),
+            pace: parseFloat(document.getElementById('pace').value),
+            shooting: parseFloat(document.getElementById('shooting').value),
+            passing: parseFloat(document.getElementById('passing').value),
+            dribbling: parseFloat(document.getElementById('dribbling').value),
+            defending: parseFloat(document.getElementById('defending').value),
+            physic: parseFloat(document.getElementById('physic').value),
+            preferred_foot: parseInt(document.getElementById('preferred_foot').value),
+            years_on_contract: parseFloat(document.getElementById('years_on_contract').value),
+            position_ATT: position === 'ATT' ? 1 : 0,
+            position_DEF: position === 'DEF' ? 1 : 0,
+            position_GK: position === 'GK' ? 1 : 0,
+            position_MID: position === 'MID' ? 1 : 0,
+            attack_work_rate_High: attackWR === 'High' ? 1 : 0,
+            attack_work_rate_Low: attackWR === 'Low' ? 1 : 0,
+            attack_work_rate_Medium: attackWR === 'Medium' ? 1 : 0,
+            defense_work_rate_High: defenseWR === 'High' ? 1 : 0,
+            defense_work_rate_Low: defenseWR === 'Low' ? 1 : 0,
+            defense_work_rate_Medium: defenseWR === 'Medium' ? 1 : 0,
+        };
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            const millions = data.predicted_value_millions;
+            const eur = data.predicted_value_eur;
+
+            document.getElementById('result-millions').textContent = `€${millions}M`;
+            document.getElementById('result-euros').textContent = `€${eur.toLocaleString()} EUR`;
+            result.classList.add('visible');
+
+        } catch (err) {
+            error.textContent = 'Could not connect to API. Make sure the server is running.';
+            error.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            loading.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
